@@ -22,7 +22,18 @@ module.exports = (req, res) => {
     } else if (pathname === '/cats/add-cat' && req.method === 'POST') {
 
     } else if (pathname === '/cats/add-breed' && req.method === 'POST') {
+        let formData = '';
+        req.on('data', data => {
+            formData += data;
+        });
 
+        req.on('end', () => {
+            const body = qs.parse(formData);
+            console.log(body.breed);
+        });
+
+        res.writeHead(301, { 'location': '/' });
+        res.end();
     }
     else {
         return true;
