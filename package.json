@@ -1,0 +1,22 @@
+{
+  "name": "cat-shelter",
+  "version": "1.0.0",
+  "description": "Cat Shelter: SoftUni JavaScript Web September 2019 Workshop",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AtanasKrondev/cat-shelter.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AtanasKrondev/cat-shelter/issues"
+  },
+  "homepage": "https://github.com/AtanasKrondev/cat-shelter#readme",
+  "dependencies": {
+    "formidable": "^1.2.1"
+  }
+}
