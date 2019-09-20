@@ -29,7 +29,17 @@ module.exports = (req, res) => {
 
         req.on('end', () => {
             const body = qs.parse(formData);
-            console.log(body.breed);
+            fs.readFile('./data/breeds.json', (err, data) => {
+                if (err) {
+                    throw err;
+                }
+                let breeds = JSON.parse(data);
+                breeds.push(body.breed);
+                const json = JSON.stringify(breeds);
+                fs.writeFile('./data/breeds.json', json, () => {
+                    console.log(`${body.breed} was added successfully to the breeds.`)
+                })
+            })
         });
 
         res.writeHead(301, { 'location': '/' });
