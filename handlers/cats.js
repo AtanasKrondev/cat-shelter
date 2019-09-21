@@ -54,12 +54,32 @@ module.exports = (req, res) => {
             };
             const oldPath = files.upload.path;
             const newPath = path.normalize(path.join(process.argv[1].replace('index.js', ''), '/content/images/' + files.upload.name));
+
             fs.rename(oldPath, newPath, (err) => {
                 if (err) {
                     throw err;
                 }
-                console.log(`Image succesfully uploaded to: ${newPath}`)
-            })
+                console.log(`Image succesfully uploaded to: ${newPath}`);
+            });
+
+            fs.readFile('./data/cats.json', 'utf8', (err, data) => {
+                if (err) {
+                    throw err;
+                };
+
+                const allCats = JSON.parse(data);
+                allCats.push({ id: cats.length + 1, ...fields, image: files.upload.name });
+                const json = JSON.stringify(allCats);
+
+                fs.writeFile('./data/cats.json', json, (err) => {
+                    if (err) {
+                        throw err;
+                    };
+                    console.log('Cat successfully added!');
+                })
+            });
+            res.writeHead(301, { 'location': '/' });
+            res.end();
         })
     } else if (pathname === '/cats/add-breed' && req.method === 'POST') {
         let formData = '';
