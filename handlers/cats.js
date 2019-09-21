@@ -13,14 +13,54 @@ module.exports = (req, res) => {
         const filePath = path.normalize(
             path.join(__dirname, '../views/addCat.html')
         );
-        readHtml(filePath, req, res);
+        fs.readFile(filePath, (err, data) => {
+            if (err) {
+                console.log(err);
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.write('404 File Not Found');
+                res.end();
+                return;
+            }
+
+            const placeholder = breeds.map(breed => `<option value="${breed}">${breed}</option>`);
+            const modifiedData = data.toString().replace('{{catBreeds}}', placeholder);
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.write(modifiedData);
+            res.end();
+        });
     } else if (pathname === '/cats/add-breed' && req.method === 'GET') {
         const filePath = path.normalize(
             path.join(__dirname, '../views/addBreed.html')
         );
-        readHtml(filePath, req, res);
+        fs.readFile(filePath, (err, data) => {
+            if (err) {
+                console.log(err);
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.write('404 File Not Found');
+                res.end();
+                return;
+            }
+
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.write(data);
+            res.end();
+        });
     } else if (pathname === '/cats/add-cat' && req.method === 'POST') {
 
+        let form = new formidable.IncomingForm();
+        form.parse(req, (err, fields, files) => {
+            if (err) {
+                throw err;
+            };
+            const oldPath = files.upload.path;
+            const newPath = path.normalize(path.join(process.argv[1].replace('index.js', ''), '/content/images/' + files.upload.name));
+            fs.rename(oldPath, newPath, (err) => {
+                if (err) {
+                    throw err;
+                }
+                console.log(`Image succesfully uploaded to: ${newPath}`)
+            })
+        })
     } else if (pathname === '/cats/add-breed' && req.method === 'POST') {
         let formData = '';
         req.on('data', data => {
@@ -48,20 +88,4 @@ module.exports = (req, res) => {
     else {
         return true;
     };
-};
-
-function readHtml(filePath, req, res) {
-    fs.readFile(filePath, (err, data) => {
-        if (err) {
-            console.log(err);
-            res.writeHead(404, { 'Content-Type': 'text/plain' });
-            res.write('404 File Not Found');
-            res.end();
-            return;
-        }
-
-        res.writeHead(200, { 'Content-Type': 'text/html' });
-        res.write(data);
-        res.end();
-    });
 };
