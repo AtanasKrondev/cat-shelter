@@ -80,7 +80,7 @@ module.exports = (req, res) => {
             });
             res.writeHead(301, { 'location': '/' });
             res.end();
-        })
+        });
     } else if (pathname === '/cats/add-breed' && req.method === 'POST') {
         let formData = '';
         req.on('data', data => {
@@ -118,20 +118,20 @@ module.exports = (req, res) => {
             }
             const id = pathname.split('/').pop();
             const cat = cats.find((cat) => cat.id === id);
-            console.log(cat)
-            let editForm = `<h2>Edit Cat</h2>
+            let editForm = `<form action="/cats-edit/${cat.id}" method="POST" class="cat-form" enctype="multipart/form-data">
+            <h2>Edit Cat</h2>
             <label for="name">Name</label>
             <input type="text" id="name" value="${cat.name}">
             <label for="description">Description</label>
-            <textarea
-                id="description">${cat.description}</textarea>
+            <textarea id="description">${cat.description}</textarea>
             <label for="image">Image</label>
-            <input type="file" id="image">
+            <input name="upload" type="file" id="image">
             <label for="group">Breed</label>
             <select id="group">
                 {{catBreeds}}
             </select>
-            <button>Edit Cat</button>`
+            <button type="submit">Edit Cat</button>
+            </form>`
             const placeholder = breeds.map(breed => `<option value="${breed}">${breed}</option>`);
             editForm = editForm.replace('{{catBreeds}}', placeholder);
 
@@ -141,9 +141,53 @@ module.exports = (req, res) => {
             res.write(modifiedData);
             res.end();
         });
-        // } else if (pathname.includes('/cats-find-new-home') && req.method === 'GET') {
-        // } else if (pathname.includes('/cats-edit') && req.method === 'POST') {
-        // } else if (pathname.includes('/cats-find-new-home') && req.method === 'POST') {
+    } else if (pathname.includes('/cats-find-new-home') && req.method === 'GET') {
+    } else if (pathname.includes('/cats-edit') && req.method === 'POST') {
+        let form = new formidable.IncomingForm();
+        form.parse(req, (err, fields, files) => {
+            if (err) {
+                throw err;
+            };
+            const oldPath = files.upload.path;
+            const newPath = path.normalize(path.join(process.argv[1].replace('index.js', ''), '/content/images/' + files.upload.name));
+
+            fs.rename(oldPath, newPath, (err) => {
+                if (err) {
+                    throw err;
+                }
+                console.log(`Image succesfully uploaded to: ${newPath}`);
+            });
+
+            fs.readFile('./data/cats.json', 'utf8', (err, data) => {
+                if (err) {
+                    throw err;
+                };
+
+                const id = pathname.split('/').pop();
+                let allCats = JSON.parse(data);
+                console.log(allCats);
+                console.log(id)
+                for (let cat of allCats) {
+                    if (cat.id === id) {
+                        console.log(cat);
+                        console.log(fields);
+                        console.log(files.upload.name);
+                        break;
+                    }
+                }
+                const json = JSON.stringify(allCats);
+
+                fs.writeFile('./data/cats.json', json, (err) => {
+                    if (err) {
+                        throw err;
+                    };
+                    console.log('Cat successfully added!');
+                })
+            });
+            res.writeHead(301, { 'location': '/' });
+            res.end();
+        });
+    } else if (pathname.includes('/cats-find-new-home') && req.method === 'POST') {
     } else {
         return true;
     };
