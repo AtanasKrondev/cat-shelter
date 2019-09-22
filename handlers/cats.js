@@ -5,6 +5,7 @@ const qs = require('querystring');
 const formidable = require('formidable');
 const breeds = require('../data/breeds');
 const cats = require('../data/cats');
+const globalPath = __dirname.toString().replace('handlers', '');
 
 module.exports = (req, res) => {
     const pathname = url.parse(req.url).pathname;
@@ -53,7 +54,7 @@ module.exports = (req, res) => {
                 throw err;
             };
             const oldPath = files.upload.path;
-            const newPath = path.normalize(path.join(process.argv[1].replace('index.js', ''), '/content/images/' + files.upload.name));
+            const newPath = path.normalize(path.join(globalPath, '/content/images/' + files.upload.name));
 
             fs.rename(oldPath, newPath, (err) => {
                 if (err) {
@@ -118,20 +119,20 @@ module.exports = (req, res) => {
             }
             const id = pathname.split('/').pop();
             const cat = cats.find((cat) => cat.id === id);
-            let editForm = `<form action="/cats-edit/${cat.id}" method="POST" class="cat-form" enctype="multipart/form-data">
+            let editForm = `<form action="/cats-edit/${id}" method="POST" class="cat-form" enctype="multipart/form-data">
             <h2>Edit Cat</h2>
             <label for="name">Name</label>
-            <input type="text" id="name" value="${cat.name}">
+            <input name="name" type="text" id="name" value="${cat.name}">
             <label for="description">Description</label>
-            <textarea id="description">${cat.description}</textarea>
+            <textarea name="description" id="description">${cat.description}</textarea>
             <label for="image">Image</label>
             <input name="upload" type="file" id="image">
             <label for="group">Breed</label>
-            <select id="group">
+            <select name="breed" id="group">
                 {{catBreeds}}
             </select>
-            <button type="submit">Edit Cat</button>
-            </form>`
+            <button type="submit">Add Cat</button>
+        </form>`
             const placeholder = breeds.map(breed => `<option value="${breed}">${breed}</option>`);
             editForm = editForm.replace('{{catBreeds}}', placeholder);
 
@@ -145,11 +146,12 @@ module.exports = (req, res) => {
     } else if (pathname.includes('/cats-edit') && req.method === 'POST') {
         let form = new formidable.IncomingForm();
         form.parse(req, (err, fields, files) => {
+            console.log(fields);
             if (err) {
                 throw err;
             };
             const oldPath = files.upload.path;
-            const newPath = path.normalize(path.join(process.argv[1].replace('index.js', ''), '/content/images/' + files.upload.name));
+            const newPath = path.normalize(path.join(globalPath, '/content/images/' + files.upload.name));
 
             fs.rename(oldPath, newPath, (err) => {
                 if (err) {
@@ -166,12 +168,12 @@ module.exports = (req, res) => {
                 const id = pathname.split('/').pop();
                 let allCats = JSON.parse(data);
                 console.log(allCats);
-                console.log(id)
                 for (let cat of allCats) {
                     if (cat.id === id) {
-                        console.log(cat);
-                        console.log(fields);
-                        console.log(files.upload.name);
+                        cat.name = fields.name;
+                        cat.description = fields.description;
+                        cat.breed = fields.breed;
+                        cat.image = files.upload.name
                         break;
                     }
                 }
@@ -181,7 +183,7 @@ module.exports = (req, res) => {
                     if (err) {
                         throw err;
                     };
-                    console.log('Cat successfully added!');
+                    console.log(`Cat ID:${id} successfully edited!`);
                 })
             });
             res.writeHead(301, { 'location': '/' });
