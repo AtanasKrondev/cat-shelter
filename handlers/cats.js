@@ -143,6 +143,38 @@ module.exports = (req, res) => {
             res.end();
         });
     } else if (pathname.includes('/cats-find-new-home') && req.method === 'GET') {
+        const id = pathname.split('/').pop();
+        const cat = cats.find((cat) => cat.id === id);
+        const filePath = path.normalize(
+            path.join(__dirname, '../views/catShelter.html')
+        );
+        fs.readFile(filePath, (err, data) => {
+            if (err) {
+                console.log(err);
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.write('404 File Not Found');
+                res.end();
+                return;
+            }
+
+            const shelterCat = `<form action="/cats-find-new-home/${id}" method="POST" class="cat-form" enctype="multipart/form-data">
+            <h2>Shelter the cat</h2>
+            <img src="/content/images/${cat.image}" alt="${cat.name}">
+            <label for="name">Name</label>
+            <input type="text" id="name" value="${cat.name}" disabled>
+            <label for="description">Description</label>
+            <textarea id="description" disabled>${cat.description}</textarea>
+            <label for="group">Breed</label>
+            <select id="group" disabled>
+                <option value="${cat.breed}">${cat.breed}</option>
+            </select>
+            <button type="submit">SHELTER THE CAT</button>
+        </form>`
+
+            const modifiedData = data.toString().replace('{{shelterCat}}', shelterCat);
+            res.write(modifiedData);
+            res.end();
+        });
     } else if (pathname.includes('/cats-edit') && req.method === 'POST') {
         let form = new formidable.IncomingForm();
         form.parse(req, (err, fields, files) => {
@@ -190,6 +222,24 @@ module.exports = (req, res) => {
             res.end();
         });
     } else if (pathname.includes('/cats-find-new-home') && req.method === 'POST') {
+        fs.readFile('./data/cats.json', 'utf8', (err, data) => {
+            if (err) {
+                throw err;
+            };
+
+            const id = pathname.split('/').pop();
+            let allCats = JSON.parse(data).filter(cat => cat.id !== id);
+            const json = JSON.stringify(allCats);
+
+            fs.writeFile('./data/cats.json', json, (err) => {
+                if (err) {
+                    throw err;
+                };
+                console.log(`Cat ID:${id} successfully adopted!`);
+            })
+        });
+        res.writeHead(301, { 'location': '/' });
+        res.end();
     } else {
         return true;
     };
